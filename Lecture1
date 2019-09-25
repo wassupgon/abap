@@ -1,4 +1,10 @@
 *CDS View 만들어 보기
-
 *ABAP에서 사용해보기
+
+*준비할것> ABAP GUI, Eclipse IDE(ABAP ADT), IDES Server(유료)
+
+
+*순서> Data 확인 - CDS - Program - Run
+
+
 
