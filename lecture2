@@ -2,5 +2,8 @@ SFLIGHT DATA Generator
 >Program SAPBC_DATA_GENERATOR.
 CDS View Advanced
  
-Ref> CDS Demo: https://blogs.sap.com/2017/02/21/standart-demo-examples-of-abap-cds-views/ 
-by Maksim Alyapyshev 
+Ref Package: SABAPDEMOS
+
+1. demo_cds_association : How to check associated data
+
+
