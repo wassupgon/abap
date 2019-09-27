@@ -1,0 +1,452 @@
+*SALV
+
+*&---------------------------------------------------------------------*
+*& Report zjae9999_salv7
+*&---------------------------------------------------------------------*
+*&  Color handling
+*&---------------------------------------------------------------------*
+REPORT zjae9999_salv9.
+
+PARAMETERS p_bukrs type bukrs default '0003'.
+
+
+*&---------------------------------------------------------------------*
+*&                         Class Definition
+*&---------------------------------------------------------------------*
+class lcl_report DEFINITION.
+
+    public section.
+        "Final output table
+            types: BEGIN OF ty_odata,
+             mandt type mandt,
+             bukrs TYPE bukrs,
+             hkont TYPE hkont,
+             augdt TYPE augdt,
+             augbl TYPE augbl,
+             zuonr TYPE dzuonr,
+             gjahr TYPE gjahr,
+             belnr tYPE belnr_d,
+             buzei TYPE buzei,
+             datum TYPE datum,
+             budat TYPE budat,
+             wrbtr TYPE z_ges_btr,
+             waers TYPE waers,
+             alidx TYPE z_age_idx,
+             older type float,
+             butxt TYPE butxt,
+             t_color type lvc_t_scol,
+           END of ty_odata.
+
+           types ty_t_odata type standard table of ty_odata.
+           data  t_odata    type standard  table of ty_odata.
+           data  wa_odata   type ty_odata.
+
+        methods: "Constructor
+                 Constructor
+                    importing in_bukrs type s_bukrs,
+                 "Data Get
+                 get_data,
+                 "Getter - Current company code
+                 get_bukrs
+                 RETURNING
+                    VALUE(out_bukrs) type bukrs,
+
+                 "Setter - Company
+                 set_bukrs
+                 IMPORTING in_bukrs type s_bukrs,
+
+                 "For Display
+                 generate_output.
+
+
+
+
+
+
+    PRIVATE SECTION.
+    "AMDP (ABAP-Managed-Data-Procedure)
+    data o_amdp_test type ref to zlc_ampt_test1.
+    "Internal Table
+    data o_data      type zlc_ampt_test1=>tt_output.
+    "Exception handler
+    data lx_msg      type ref to cx_salv_msg.
+    "ALV
+    DATA o_alv       TYPE REF TO cl_salv_table.
+    "values for selection screen - bukrs
+    data v_bukrs     type bukrs.
+    "for alv : pf_status
+    data o_functions type ref to cl_salv_functions_list.
+    "Setter - PF-STATUS
+    methods set_pf_status
+        changing
+            co_alv type ref to cl_salv_table.
+    methods set_layout
+        changing
+            co_alv type ref to cl_salv_table.
+    methods set_top_of_page
+        changing
+            co_alv type ref to cl_salv_table.
+    methods set_end_of_page
+        changing
+            co_alv type ref to cl_salv_table.
+    methods set_display_setting
+        changing
+            co_alv type ref to cl_salv_table.
+    methods set_columns
+        changing
+            co_alv type ref to cl_salv_table.
+    methods set_hotspot_belnr
+        changing
+            co_alv    type ref to cl_salv_table
+            co_report TYPE REF TO lcl_report.
+    methods on_link_click
+         FOR EVENT link_click OF cl_salv_events_table
+          IMPORTING
+            row
+            column.
+
+    methods set_colors
+        changing
+            co_alv    type ref to cl_salv_table
+            ct_data   type ty_t_odata.
+
+endclass.
+
+
+
+*&---------------------------------------------------------------------*
+*&                         Main Program part
+*&---------------------------------------------------------------------*
+
+start-of-selection.
+
+
+
+data(lo_report) = new lcl_report( p_bukrs ).
+lo_report->get_data( ).
+lo_report->generate_output( ).
+
+
+
+
+
+
+
+
+*&---------------------------------------------------------------------*
+*&                         Class Implementation
+*&---------------------------------------------------------------------*
+class lcl_report IMPLEMENTATION.
+
+
+    method set_bukrs.
+        v_bukrs = in_bukrs.
+    endmethod.
+
+    method get_bukrs.
+        out_bukrs = v_bukrs.
+    endmethod.
+
+    method get_data.
+        create object o_amdp_test.
+        o_amdp_test->get_data(
+            EXPORTING
+                in_mandt = sy-mandt
+                in_bukrs = v_bukrs
+            IMPORTING
+                et_out = o_data ).
+
+        "copy AMDP result ot table
+        refresh t_odata.
+        loop at o_data ASSIGNING FIELD-SYMBOL(<sender>).
+            clear wa_odata. clear wa_odata-t_color.
+            MOVE-CORRESPONDING <sender> to wa_odata.
+            append wa_odata to t_odata.
+        endloop.
+
+
+
+    ENDMETHOD.
+
+    method generate_output.
+        try.
+            cl_salv_table=>factory(
+                IMPORTING
+                    r_salv_table = o_alv
+                changing
+                    t_table      = t_odata ).
+            catch cx_salv_msg into lx_msg.
+        endtry.
+
+       "set pf_status
+        me->set_pf_status(
+            changing
+                co_alv = o_alv ).
+       "Set Header & Footer
+        me->set_top_of_page(
+            CHANGING
+                co_alv = o_alv ).
+        me->set_end_of_page(
+            CHANGING
+                co_alv = o_alv ).
+       "set layout
+       me->set_layout(
+            CHANGING
+                co_alv = o_alv ).
+       "set display setting : Zebra
+       me->set_display_setting(
+            CHANGING
+                co_alv = o_alv ).
+       "columns, fieldcatalog, length...
+       me->set_columns(
+            CHANGING
+                co_alv = o_alv ).
+       "hotspot + event handler
+       me->set_hotspot_belnr(
+      CHANGING
+        co_alv    = o_alv
+        co_report = lo_report ).
+
+       "Color
+       me->set_colors(
+        CHANGING
+            co_alv = o_alv
+            ct_data = t_odata ).
+
+
+       "display
+       o_alv->display( ).
+    endmethod.
+
+  METHOD Constructor.
+    "Constructor
+        me->set_bukrs( in_bukrs ).
+  ENDMETHOD.
+
+  method set_pf_status.
+    create object o_functions.
+    o_functions = co_alv->get_functions( ).
+    o_functions->set_default( abap_true ).
+  endmethod.
+
+  method set_layout.
+    data ls_key     type salv_s_layout_key.
+    data lo_layout  type ref to cl_salv_layout.
+    data lf_variant type slis_vari.
+
+    create object lo_layout.
+    lo_layout       = co_alv->get_layout( ).
+    ls_key-report   = sy-repid.
+    lo_layout->set_key( ls_key ).
+    "Remove restrictions of layout saving.
+    lo_layout->set_save_restriction( if_salv_c_layout=>restrict_none ).
+
+    lf_variant = 'DEFAULT'.
+    lo_layout->set_initial_layout( lf_variant ).
+  endmethod.
+
+  method set_top_of_page.
+    DATA: lo_header  TYPE REF TO cl_salv_form_layout_grid,
+          lo_h_label TYPE REF TO cl_salv_form_label,
+          lo_h_flow  TYPE REF TO cl_salv_form_layout_flow.
+
+
+    CREATE OBJECT lo_header.
+*
+*   To create a Lable or Flow we have to specify the target
+*     row and column number where we need to set up the output
+*     text.
+*
+*   information in Bold
+    lo_h_label = lo_header->create_label( row = 1 column = 1 ).
+    lo_h_label->set_text( 'Header in Bold' ).
+*
+*   information in tabular format
+    lo_h_flow = lo_header->create_flow( row = 2  column = 1 ).
+    lo_h_flow->create_text( text = 'This is text of flow' ).
+*
+    lo_h_flow = lo_header->create_flow( row = 3  column = 1 ).
+    lo_h_flow->create_text( text = 'Number of Records in the output' ).
+*
+    lo_h_flow = lo_header->create_flow( row = 3  column = 2 ).
+    lo_h_flow->create_text( text = 20 ).
+*
+*   set the top of list using the header for Online.
+    co_alv->set_top_of_list( lo_header ).
+*
+*   set the top of list using the header for Print.
+    co_alv->set_top_of_list_print( lo_header ).
+
+  ENDMETHOD.
+
+  method set_end_of_page.
+    DATA: lo_footer  TYPE REF TO cl_salv_form_layout_grid,
+          lo_f_label TYPE REF TO cl_salv_form_label,
+          lo_f_flow  TYPE REF TO cl_salv_form_layout_flow.
+*
+*   footer object
+    CREATE OBJECT lo_footer.
+*
+*   information in bold
+    lo_f_label = lo_footer->create_label( row = 1 column = 1 ).
+    lo_f_label->set_text( 'Footer .. here it goes' ).
+*
+*   tabular information
+    lo_f_flow = lo_footer->create_flow( row = 2  column = 1 ).
+    lo_f_flow->create_text( text = 'This is text of flow in footer' ).
+*
+    lo_f_flow = lo_footer->create_flow( row = 3  column = 1 ).
+    lo_f_flow->create_text( text = 'Footer number' ).
+*
+    lo_f_flow = lo_footer->create_flow( row = 3  column = 2 ).
+    lo_f_flow->create_text( text = 1 ).
+*
+*   Online footer
+    co_alv->set_end_of_list( lo_footer ).
+*
+*   Footer in print
+    co_alv->set_end_of_list_print( lo_footer ).
+  endmethod.
+
+  method set_display_setting.
+    DATA: lo_display TYPE REF TO cl_salv_display_settings.
+*
+*   get display object
+    lo_display = co_alv->get_display_settings( ).
+*
+*   set ZEBRA pattern
+    lo_display->set_striped_pattern( 'X' ).
+*
+*   Title to ALV
+    lo_display->set_list_header( 'ALV Test for Display Settings' ).
+*
+  endmethod.
+
+  method set_columns.
+*...Get all the Columns
+    DATA: lo_cols TYPE REF TO cl_salv_columns.
+    lo_cols = o_alv->get_columns( ).
+*
+*   set the Column optimization
+    lo_cols->set_optimize( 'X' ).
+*
+*...Process individual columns
+    DATA: lo_column TYPE REF TO cl_salv_column.
+*
+*   Change the properties of the Columns KUNNR
+    TRY.
+        lo_column = lo_cols->get_column( 'OLDER' ).
+        lo_column->set_long_text( 'Older' ).
+        lo_column->set_medium_text( 'Older' ).
+        lo_column->set_short_text( 'Older' ).
+        lo_column->set_decimals( '2' ).
+        lo_column->set_output_length( 4 ).
+      CATCH cx_salv_not_found.                          "#EC NO_HANDLER
+    ENDTRY.
+*
+
+  endmethod.
+
+  METHOD set_hotspot_belnr.
+*...HotSpot
+    DATA: lo_cols_tab TYPE REF TO cl_salv_columns_table,
+          lo_col_tab  TYPE REF TO cl_salv_column_table.
+*
+*   get Columns object
+    lo_cols_tab = co_alv->get_columns( ).
+*
+*   Get VBELN column
+    TRY.
+        lo_col_tab ?= lo_cols_tab->get_column( 'BELNR' ).
+      CATCH cx_salv_not_found.
+    ENDTRY.
+*
+*   Set the HotSpot for BELNR Column
+    TRY.
+        CALL METHOD lo_col_tab->set_cell_type
+          EXPORTING
+            value = if_salv_c_cell_type=>hotspot.
+        .
+      CATCH cx_salv_data_error .
+    ENDTRY.
+*
+*...Events
+    DATA: lo_events TYPE REF TO cl_salv_events_table.
+*
+*   all events
+    lo_events = o_alv->get_event( ).
+*
+*   event handler
+    SET HANDLER co_report->on_link_click FOR lo_events.
+*
+  ENDMETHOD.                    "set_hotspot_vbeln
+*
+* Handles the UI on the VBELN (HotSpot)
+  METHOD on_link_click.
+    read table lo_report->o_data into data(wa) index row.
+    if  wa-belnr is not INITIAL and
+        wa-bukrs is not INITIAL and
+        wa-gjahr is not INITIAL.
+
+        set PARAMETER ID 'BUK' FIELD wa-bukrs.
+        set parameter id 'BLN' field wa-belnr.
+        set parameter id 'GJR' field wa-gjahr.
+
+        call transaction 'FB03' AND SKIP FIRST SCREEN.
+
+    endif.
+
+  ENDMETHOD.
+
+  METHOD set_colors.
+*.....Color for COLUMN.....
+    DATA: lo_cols_tab TYPE REF TO cl_salv_columns_table,
+          lo_col_tab  TYPE REF TO cl_salv_column_table.
+    DATA: ls_color TYPE lvc_s_colo.    " Colors strucutre
+
+*   get Columns object
+    lo_cols_tab = co_alv->get_columns( ).
+    INCLUDE <color>.
+
+*    Amt column to yellow
+    TRY.
+        lo_col_tab ?= lo_cols_tab->get_column( 'WRBTR' ).
+        ls_color-col = col_total.
+        lo_col_tab->set_color( ls_color ).
+      CATCH cx_salv_not_found.
+    ENDTRY.
+
+    DATA: lt_s_color TYPE lvc_t_scol,
+          ls_s_color TYPE lvc_s_scol.
+
+    loop at ct_data ASSIGNING FIELD-SYMBOL(<colorset>).
+        if <colorset>-alidx gt 500.
+          ls_s_color-fname     = 'BELNR'.
+          ls_s_color-color-col = col_positive.
+          ls_s_color-color-int = 0.
+          ls_s_color-color-inv = 0.
+          APPEND ls_s_color TO lt_s_color.
+          CLEAR  ls_s_color.
+        endif.
+
+        if <colorset>-alidx lt 500.
+          ls_s_color-fname     = 'BELNR'.
+          ls_s_color-color-col = col_negative.
+          ls_s_color-color-int = 0.
+          ls_s_color-color-inv = 0.
+          APPEND ls_s_color TO lt_s_color.
+          CLEAR  ls_s_color.
+        endif.
+*     Modify that data back to the output table
+     <colorset>-t_color = lt_s_color.
+     clear lt_s_color.
+    endloop.
+
+    TRY.
+        lo_cols_tab->set_color_column( 'T_COLOR' ).
+      CATCH cx_salv_data_error.                         "#EC NO_HANDLER
+    ENDTRY.
+
+  ENDMETHOD.
+
+endclass.
