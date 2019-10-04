@@ -1,0 +1,30 @@
+@AbapCatalog.sqlViewName: 'DEMO_CDS_ASSOC' 
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+define view demo_cds_association 
+  (_spfli_scarr, id, carrier, flight, departure, destination )
+  as select from spfli 
+            association [1..1] to scarr as _spfli_scarr 
+              on $projection.carrid = _spfli_scarr.carrid
+     { _spfli_scarr, 
+       key spfli.carrid, 
+       key _spfli_scarr.carrname, 
+       key spfli.connid, 
+       spfli.cityfrom,  
+       spfli.cityto } 
+
+SE16N data check. -> cannot see associated origin
+check difference BT join and association: https://help.sap.com/doc/abapdocu_751_index_htm/7.51/en-US/abencds_f1_association.htm
+
+1.() 안에는 선택하고싶은 필드명과, Association 대상(테이블,뷰,Query) 등이 올 수 있다. 필드는 콤마로 구분하고. 편의를 위해 Association 대상은 _ 기호를 써서 구분하자
+
+2. 0..1 : Master Data
+
+3. 0..* or 1..*: similar as outer 
+                 Join 
+                 No Join
+                 
+4. 1..1 : one to one
+5. *..1 : many to one 
+
+
+
