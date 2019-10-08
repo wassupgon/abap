@@ -1,0 +1,30 @@
+NAV HU Trigger - How to make XML out of ABAP
+
+CL_PROXY_XML_TRANSFORM=>abap_to_xml_string(
+exporting ABAP_DATA = <transform_input> "local data
+recieving xml = lv_xml ):
+
+    data lr_xml_writer type ref to cl_sxml_string_writer.
+    
+    lr_xml_writer = cl_proxy_sxml_factory=>create_string_writer( ).
+
+    call method abap_to_xml
+    exporting
+      abap_data     = abap_data       "type any
+      ddic_type     = ddic_type       "type typename optional
+      xml_writer    = lr_xml_writer   "type ref to IF_SXML_WRITER
+      ext_xml       = ext_xml         "type ABAP_BOOL default ABAP_FALSE
+      root_element  = root_element    "type QNAME optional
+      svar_name     = svar_name.      "PRX_R3NAME optional
+
+  xml = lr_xml_writer->get_output( ).
+
+
+
+https://blogs.sap.com/2014/08/01/abap-to-xml-and-vice-versa/
+on large XML files, using the ABAP XSLT is faster
+https://blogs.sap.com/2019/04/04/how-to-generate-xml-dynamically-from-xslt/
+XSLT
+
+
+look in packages SXSLT_DEMO and SST_DEMO (if available in your system). Try the transactions SSTDEMO2 or SXSLTDEMO1. Watch what's happening in the debugger (breakpoint at CALL TRANSFORMATION).
