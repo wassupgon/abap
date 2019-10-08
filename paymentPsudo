@@ -1,0 +1,49 @@
+getDataReguh().
+  "get data from REGUH, ACDOCA...
+getAdditionalData().
+  "ZData, Add-on SPRO data
+checkData(). 
+  checkValidData().
+  checkDuplication().
+
+
+getLogicalPath()
+  CALL FUNCTION 'FILE_GET_NAME'.
+
+
+generateXML()
+  setHeader()
+    "using text(200) type c , apply like ::::: filetab_hdr-text = '<?xml version="1.0" encoding="utf-8" ?>'.
+  setBody()
+    "using concatenate. map value to <> form...  
+  
+  generate()
+  GUI_DOWNLOAD, filetype DAT, CODEPAGE 4110
+  or
+      OPEN DATASET file1 FOR OUTPUT IN TEXT MODE ENCODING UTF-8.
+      IF sy-subrc EQ 0.
+        LOOP AT filetab_hdr.
+          TRANSFER filetab_hdr-text TO file1.
+        ENDLOOP.
+
+        LOOP AT filetab.
+          CLEAR tag_val.
+          READ TABLE tag_val_tab INTO tag_val WITH TABLE KEY index = filetab-index.
+          CONCATENATE filetab-tag_name tag_val-tag_value INTO text.
+          TRANSFER text TO file1.
+        ENDLOOP.
+      ELSE.
+        CONCATENATE text-e37 file1 INTO err_msg SEPARATED BY space.
+        PERFORM printerror USING err_msg.
+        EXIT.
+      ENDIF.
+      CLOSE DATASET file1.
+      
+      exception handlers:
+      CX_SY_FILE_AUTHORITY
+      CX_SY_FILE_OPEN
+      CX_SY_CODEPAGE_CONVERTER_INIT CX_SY_CONVERSION_CODEPAGE
+      CX_SY_PIPES_NOT_SUPPORTED CX_SY_TOO_MANY_FILES.
+      CX_SY_FILE_CLOSE "cannot close file
+      
+      
