@@ -1,0 +1,27 @@
+[
+ {
+   "PARID": "SAP_01",
+   "TXT": "Setup",
+   "TXTLG": "Setup"
+ },
+ {
+   "PARID": "SAP_02",
+   "TXT": "Machine",
+   "TXTLG": "Machine"
+ },
+ {
+   "PARID": "Z00010",
+   "TXT": "Setup",
+   "TXTLG": "Setup"
+ },
+ {
+   "PARID": "Z00011",
+   "TXT": "Setup",
+   "TXTLG": "Setup unpaid"
+ },
+ {
+   "PARID": "Z_0003",
+   "TXT": "PERS",
+   "TXTLG": "Number of persons"
+ }
+]

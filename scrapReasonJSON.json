@@ -1,0 +1,38 @@
+[
+ {
+   "FCODEC": 1,
+   "FTEXTC": "Crack"
+ },
+ {
+   "FCODEC": 2,
+   "FTEXTC": "Hole pattern"
+ },
+ {
+   "FCODEC": 3,
+   "FTEXTC": "Contour"
+ },
+ {
+   "FCODEC": 4,
+   "FTEXTC": "Form"
+ },
+ {
+   "FCODEC": 5,
+   "FTEXTC": "Clinching"
+ },
+ {
+   "FCODEC": 6,
+   "FTEXTC": "Marking"
+ },
+ {
+   "FCODEC": 7,
+   "FTEXTC": "cover film torn"
+ },
+ {
+   "FCODEC": 8,
+   "FTEXTC": "cutting holes torn"
+ },
+ {
+   "FCODEC": 9,
+   "FTEXTC": "insul. missing/wrong"
+ }
+]
