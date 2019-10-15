@@ -103,3 +103,18 @@ CONSTANTS: carrid_aa TYPE c LENGTH 2 VALUE 'AA',
 *                                    connid = @conn_id )
 *       INTO (@DATA(city), @DATA(lati), @DATA(longi)).
 *
+*Union
+DATA prog_range TYPE RANGE OF trdir-name.
+CONSTANTS devclass type tadir-devclass VALUE 'ZCOD'.
+SELECT 'I' AS sign, 'EQ' AS option, obj_name AS low, ' ' AS high
+       FROM tadir
+       WHERE pgmid = 'R3TR' AND object = 'PROG' AND devclass = @devclass
+UNION
+SELECT 'I' AS sign, 'CP' AS option, obj_name && '*' AS low, ' ' AS high
+        FROM tadir
+        WHERE pgmid = 'R3TR' AND object = 'CLAS' AND devclass = @devclass
+into table @prog_range.
+
+cl_demo_output=>write_data( prog_range ).
+cl_demo_output=>display( ).
+
