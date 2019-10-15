@@ -1,17 +1,9 @@
-*abap7.5
-
-*DATA: carr_id TYPE spfli-carrid VALUE 'LH',
-*      conn_id TYPE spfli-connid VALUE '400'.
-*
-*
-*SELECT SINGLE city, latitude, longitude
-*       FROM sgeocity
-*       WHERE city IN ( SELECT cityfrom
-*                              FROM spfli
-*                              WHERE carrid = @carr_id AND
-*                                    connid = @conn_id )
-*       INTO (@DATA(city), @DATA(lati), @DATA(longi)).
-*
+*&---------------------------------------------------------------------*
+*& Report ZJAE9999SELECT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zjae9999select.
 
 CONSTANTS: carrid_aa TYPE c LENGTH 2 VALUE 'AA',
            carrid_ua TYPE c LENGTH 2 VALUE 'UA'.
@@ -31,7 +23,28 @@ CONSTANTS: carrid_aa TYPE c LENGTH 2 VALUE 'AA',
 *INTO TABLE @DATA(results).
 *"you can collect it after on
 *
+
+**level 1-2: select via mapping, with group by
+*SELECT    sbook~carrid, sbook~bookid, sbook~loccuram, sbook~loccurkey,
+*          CASE WHEN carrid = @carrid_aa THEN sbook~loccuram
+*               ELSE 0
+*          END  AS   price_aa,
 *
+*          CASE WHEN carrid = @carrid_ua THEN sbook~loccuram
+*               ELSE 0
+*          END  AS   price_ua,
+*
+*          Count( * ) as counting
+*FROM      sbook
+*WHERE     carrid IN ( @carrid_aa, @carrid_ua )
+*GROUP BY  carrid, connid, bookid, loccuram, loccurkey
+*ORDER BY  carrid, bookid
+*INTO TABLE @DATA(it_results).
+*
+*cl_demo_output=>write_data( it_results ).
+*cl_demo_output=>display( ).
+
+
 **level 2: join
 *
 *SELECT    sbook~carrid, sbook~connid, sbook~fldate, sbook~bookid, sbook~loccuram, sbook~loccurkey,
@@ -54,24 +67,39 @@ CONSTANTS: carrid_aa TYPE c LENGTH 2 VALUE 'AA',
 *INTO TABLE @DATA(level2).
 
 
+
+
 *level 3: outer join
-SELECT    sbook~carrid, sbook~connid, sbook~fldate, sbook~bookid, sbook~loccuram, sbook~loccurkey,
-          CASE WHEN sbook~carrid = @carrid_aa THEN sbook~loccuram
-               ELSE 0
-          END  AS   price_aa,
+*SELECT    sbook~carrid, sbook~connid, sbook~fldate, sbook~bookid, sbook~loccuram, sbook~loccurkey,
+*
+*          CASE WHEN sbook~carrid = @carrid_aa THEN sbook~loccuram
+*               ELSE 0
+*          END  AS   price_aa,
+*
+*          CASE WHEN sbook~carrid = @carrid_ua THEN sbook~loccuram
+*               ELSE 0
+*          END  AS   price_ua,
+*
+*          sflight~price
+*
+*FROM      sflight left outer join sbook
+*          on ( sbook~carrid = sflight~carrid and sbook~CONNID = sflight~connid and
+*               sbook~FLDATE = sflight~fldate )
+*
+*WHERE     sbook~carrid IN ( @carrid_aa, @carrid_ua )
+*ORDER BY  sbook~carrid, sbook~bookid
+*INTO TABLE @DATA(level3).
 
-          CASE WHEN sbook~carrid = @carrid_ua THEN sbook~loccuram
-               ELSE 0
-          END  AS   price_ua,
 
-          sflight~price
-
-FROM      sflight left outer join sbook
-          on ( sbook~carrid = sflight~carrid and sbook~CONNID = sflight~connid and
-               sbook~FLDATE = sflight~fldate )
-
-WHERE     sbook~carrid IN ( @carrid_aa, @carrid_ua )
-ORDER BY  sbook~carrid, sbook~bookid
-INTO TABLE @DATA(level3).
-
-
+*DATA: carr_id TYPE spfli-carrid VALUE 'LH',
+*      conn_id TYPE spfli-connid VALUE '400'.
+*
+*
+*SELECT SINGLE city, latitude, longitude
+*       FROM sgeocity
+*       WHERE city IN ( SELECT cityfrom
+*                              FROM spfli
+*                              WHERE carrid = @carr_id AND
+*                                    connid = @conn_id )
+*       INTO (@DATA(city), @DATA(lati), @DATA(longi)).
+*
